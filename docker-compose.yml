@@ -1,0 +1,74 @@
+version: '3'
+services:
+  api:
+    container_name: api-cc
+    build:
+      context: ./
+    ports:
+      - "${WEB_PORT:-8070}:8080"
+    image: mafio69/api-symfony
+    depends_on:
+      - database
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - APP_NAME=${APP_NAME:-pawel}
+      - PHP_SENDMAIL_DOMAIN=localhost
+      - APP_ENV=${APP_ENV:-local}
+      - EMAIL_USER=${EMAIL_USER:-user}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-password}
+      - EMAIL_HOST=${EMAIL_HOST:-mailtrap}
+      - XDEBUG_MODE=${XDEBUG_MODE:-debug}
+      - XDEBUG_REMOTE_AUTOSTART=1
+      - XDEBUG_CLIENT_HOST=${XDEBUG_CLIENT_HOST:-host.docker.internal}
+      - XDEBUG_CLIENT_PORT=${XDEBUG_CLIENT_PORT:-9003}
+    #      - DATABASE_HOST=${DATABASE_HOST:-database}
+    #      - DATABASE_NAME=${DATABASE_NAME}
+    #      - DATABASE_URL_DEV=${DATABASE_URL_DEV}
+    #      - DATABASE_USERNAME=${DATABASE_USERNAME}
+    #      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+    #      - DATABASE_ROOT_PASSWORD=${DATABASE_ROOT_PASSWORD}
+    #      - SOCKET=${SOCKET:-~}
+    volumes:
+      - ./main:/main
+      - ./logs/symfony-logs:/main/var/log
+      - ./logs/cron:/var/log/cron
+    #    links:
+    #      - database:mysql
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:${WEB_PORT}" ]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+
+#  database:
+#    container_name: mysql-cc
+#    ports:
+#      - "${DATABASE_PORT_LOCAL:-3308}:3306"
+#    image: mysql:8.0.27
+#    restart: always
+#    environment:
+#      MYSQL_ROOT_PASSWORD: ${DATABASE_ROOT_PASSWORD}
+#      MYSQL_USER: ${DATABASE_USERNAME}
+#      MYSQL_PASSWORD: ${DATABASE_PASSWORD}
+#      MYSQL_DATABASE: ${DATABASE_NAME}
+#    cap_add:
+#      - SYS_NICE
+#
+#  mailtrap:
+#    container_name: mailtrap-tools
+#    image: mailhog/mailhog
+#    logging:
+#      driver: 'none'  # disable saving logs
+#    ports:
+#      - "1030:1025" # smtp server
+#      - "8035:8025" # web ui
+
+networks:
+  default:
+    external:
+      name: mf-net
+volumes:
+  mysql-data-proxy:
